@@ -1,0 +1,26 @@
+ name: Create or modify registry keys
+  hosts: windows_servers
+  gather_facts: no
+  tasks:
+    - name: Define the list of registry keys
+      set_fact:
+        registry_keys:
+          - name: MySetting1
+            value: 12345
+          - name: MySetting2
+            value: 67890
+
+    - name: Create or modify the registry keys
+      win_regedit:
+        path: HKLM:\SOFTWARE\MyApp
+        name: "{{ item.name }}"
+        data: "{{ item.value }}"
+        type: dword
+        state: present
+      loop: "{{ registry_keys }}"
+      register: result
+
+    - name: Save a log with the results
+      debug:
+        msg: "Registry key {{ item.name }} {% if item.changed %}was changed{% else %}did not need to be changed{% endif %}"
+      loop: "{{ result.results }}"
